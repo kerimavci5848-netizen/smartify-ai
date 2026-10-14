@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎮</text></svg>">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Profilim — GameStore</title>
+  <link rel="stylesheet" href="css/style.css?v=3" />
+  <script>if((performance.getEntriesByType('navigation')[0]||{}).type==='reload'||performance.navigation&&performance.navigation.type===1){window.location.replace('index.html');}</script>
+</head>
+<body>
+
+<nav class="navbar" id="navbar"></nav>
+
+<div class="container">
+  <div class="breadcrumb">
+    <a href="index.html">Ana Sayfa</a> › <span>Profilim</span>
+  </div>
+
+  <div id="profile-header"></div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('library', this)">🎮 Kütüphane</button>
+    <button class="tab-btn" onclick="switchTab('orders', this)">📦 Siparişlerim</button>
+    <button class="tab-btn" onclick="switchTab('account', this)">⚙️ Hesap Bilgileri</button>
+  </div>
+
+  <div id="tab-library" class="tab-content active"></div>
+  <div id="tab-orders" class="tab-content"></div>
+  <div id="tab-account" class="tab-content"></div>
+</div>
+
+<footer>
+  <p>© 2026 GameStore — Tüm hakları saklıdır. &nbsp;|&nbsp; <a href="store.html">Mağaza</a> &nbsp;|&nbsp; <a href="cart.html">Sepet</a></p>
+  <span class="dev-credit">Developed by Kerim Avcı</span>
+</footer>
+
+<script src="js/data.js?v=3"></script>
+    <script src="js/api.js?v=3"></script>
+<script src="js/utils.js?v=3"></script>
+<script>
+  let user = null;
+
+  // ---------- YARDIMCI: avatar URL ----------
+  function avatarSrc(val) {
+    if (!val) return '';
+    if (val.startsWith('/') || val.startsWith('http') || val.startsWith('data:')) return val;
+    return '/site/' + val;
+  }
+
+  // ---------- AVATAR MEKANIZMASI ----------
+  let _selectedAvatar = null;
+
+  function _onAvatarClick() {
+    document.querySelectorAll('.avatar-option').forEach(x => x.classList.remove('selected'));
+    this.classList.add('selected');
+    _selectedAvatar = this.dataset.avatar
+      || (this.querySelector('img') ? this.querySelector('img').getAttribute('src') : null)
+      || this.textContent.trim();
+    const preview = document.getElementById('av-preview');
+    if (!preview) return;
+    if (this.querySelector('img')) {
+      preview.innerHTML = `<img src="/site/${_selectedAvatar}" style="width:80px;height:80px;object-fit:cover;border-radius:50%;border:3px solid var(--accent-hover);" />`;
+    } else {
+      preview.innerHTML = `<div style="width:80px;height:80px;border-radius:50%;border:3px solid var(--accent-hover);display:flex;align-items:center;justify-content:center;font-size:2.2rem;background:var(--bg-secondary);">${_selectedAvatar}</div>`;
+    }
+  }
+
+  async function _loadAvatarPicker(gridId) {
+    const grid = document.getElementById(gridId);
+    if (!grid) return;
+    try {
+      const res = await fetch('/site/api/auth.php?action=get_avatars');
+      const data = await res.json();
+      if (!data.ok) return;
+      grid.innerHTML = data.avatars.map(src =>
+        `<div class="avatar-option" data-avatar="${src}" style="overflow:hidden;padding:0;width:56px;height:56px;border-radius:50%;border:2px solid var(--border);cursor:pointer;flex-shrink:0;background:var(--bg-secondary);">
+          <img src="/site/${src}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentElement.style.display='none'" loading="lazy" />
+        </div>`
+      ).join('');
+      grid.querySelectorAll('.avatar-option').forEach(el => el.addEventListener('click', _onAvatarClick));
+    } catch(e) { console.warn('Avatar listesi yüklenemedi', e); }
+  }
+
+  function _initAvatarPicker() {
+    document.querySelectorAll('.avatar-option').forEach(el => el.addEventListener('click', _onAvatarClick));
+  }
+
+  async function saveSelectedAvatar() {
+    if (!_selectedAvatar) { showToast('Lütfen bir avatar seçin.', 'warning'); return; }
+    const btn = document.getElementById('av-save-btn');
+    btn.disabled = true; btn.textContent = 'Kaydediliyor...';
+    try {
+      const res = await fetch('/site/api/auth.php?action=update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ avatar: _selectedAvatar })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        user.avatar = _selectedAvatar;
+        DB._currentUser = null;
+        const avatarDiv = document.querySelector('.profile-avatar');
+        if (avatarDiv) {
+          if (_selectedAvatar.includes('/') || _selectedAvatar.startsWith('data:')) {
+            avatarDiv.innerHTML = `<img src="${_selectedAvatar}" style="width:80px;height:80px;object-fit:cover;display:block;" />`;
+          } else {
+            avatarDiv.innerHTML = `<span style="font-size:2.2rem;display:flex;align-items:center;justify-content:center;width:80px;height:80px;">${_selectedAvatar}</span>`;
+          }
+        }
+        await renderNavbar('');
+        showToast('Profil fotoğrafı güncellendi!', 'success');
+        const msgEl = document.getElementById('av-msg');
+        if (msgEl) { msgEl.innerHTML = '<div class="alert alert-success" style="margin-bottom:0.5rem;">✅ Güncellendi.</div>'; setTimeout(() => { msgEl.innerHTML = ''; }, 3000); }
+      } else {
+        showToast(data.msg || 'Hata oluştu.', 'error');
+      }
+    } catch(e) { showToast('Bağlantı hatası.', 'error'); }
+    finally { btn.disabled = false; btn.textContent = '💾 Kaydet'; }
+  }
+
+  // ---------- TAB SWITCH ----------
+  function switchTab(name, btn) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + name).classList.add('active');
+  }
+
+  // ---------- LIBRARY ----------
+  async function renderLibrary() {
+    const el = document.getElementById('tab-library');
+    const [orders, products] = await Promise.all([
+      DB.getUserOrders().catch(() => []),
+      DB.getProducts().catch(() => [])
+    ]);
+    const idSet = new Set();
+    orders.forEach(o => { (o.items || []).forEach(item => { if (item.product_id) idSet.add(item.product_id); }); });
+    const lib = [...idSet];
+
+    if (lib.length === 0) {
+      el.innerHTML = `
+        <div style="text-align:center;padding:3rem;color:var(--text-muted);">
+          <div style="font-size:3rem;margin-bottom:1rem;">🎮</div>
+          <p>Henüz oyununuz yok. <a href="store.html">Mağazaya git →</a></p>
+        </div>`;
+      return;
+    }
+
+    const itemsHTML = lib.map(pid => {
+      const p = products.find(x => x.id === pid);
+      if (!p) return '';
+      return `
+        <div class="library-item" onclick="window.location.href='game.html?id=${p.id}'" style="cursor:pointer;">
+          <div class="library-item-icon">${p.image ? `<img src="${p.image}" onerror="this.style.display='none'" style="width:100%;height:100%;object-fit:cover;" />` : (p.emoji || '🎮')}</div>
+          <div class="library-item-name">${p.title}</div>
+          <div style="font-size:0.72rem;color:var(--text-muted);padding:0.2rem 0.5rem;">${p.category}</div>
+        </div>`;
+    }).join('');
+
+    el.innerHTML = `
+      <p style="color:var(--text-muted);margin-bottom:1.2rem;font-size:0.9rem;">${lib.length} oyun kütüphanenizde</p>
+      <div class="library-grid">${itemsHTML}</div>`;
+  }
+
+  // ---------- ORDERS ----------
+  async function renderOrders() {
+    const el = document.getElementById('tab-orders');
+    const userOrders = await DB.getUserOrders();
+
+    if (userOrders.length === 0) {
+      el.innerHTML = `
+        <div style="text-align:center;padding:3rem;color:var(--text-muted);">
+          <div style="font-size:3rem;margin-bottom:1rem;">📦</div>
+          <p>Henüz siparişiniz yok.</p>
+        </div>`;
+      return;
+    }
+
+    el.innerHTML = [...userOrders].reverse().map(order => {
+      const gamesHTML = (order.items || []).map(i =>
+        `<span class="order-game-tag">${i.title}</span>`
+      ).join('');
+      return `
+        <div class="order-item">
+          <div class="order-header">
+            <div>
+              <div style="font-weight:600;color:var(--text-bright);margin-bottom:0.2rem;">Sipariş #${shortId(order.id)}</div>
+              <div class="order-date">${formatDate(order.created_at || order.createdAt)}</div>
+            </div>
+            <div class="order-total">${formatPrice(order.total)}</div>
+          </div>
+          <div class="order-games">${gamesHTML}</div>
+        </div>`;
+    }).join('');
+  }
+
+  // ---------- ACCOUNT ----------
+  function renderAccount() {
+    const el = document.getElementById('tab-account');
+    const avSrc = user.avatar
+      ? (user.avatar.startsWith('/') || user.avatar.startsWith('http') || user.avatar.startsWith('data:')
+          ? user.avatar : '/site/' + user.avatar)
+      : '';
+
+    el.innerHTML = `
+      <div style="max-width:520px;">
+
+        <!-- AVATAR KARTI -->
+        <div class="game-sidebar" style="position:static;margin-bottom:1rem;padding:1.5rem;">
+          <h3 style="color:var(--text-bright);margin-bottom:1rem;font-size:1rem;border-bottom:1px solid var(--border);padding-bottom:0.6rem;">🖼️ Profil Fotoğrafı</h3>
+          <div id="av-msg"></div>
+          <div style="display:flex;align-items:center;gap:1.2rem;margin-bottom:1.2rem;">
+            <div id="av-preview" style="flex-shrink:0;">
+              ${avSrc
+                ? `<img src="${avSrc}" style="width:72px;height:72px;object-fit:cover;border-radius:50%;border:3px solid var(--accent);" onerror="this.style.display='none'" />`
+                : `<div style="width:72px;height:72px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:1.8rem;color:#fff;font-weight:700;">${user.username[0].toUpperCase()}</div>`
+              }
+            </div>
+            <p style="color:var(--text-muted);font-size:0.83rem;line-height:1.5;">Aşağıdan bir avatar seç,<br>ardından <strong style="color:var(--text-primary);">Kaydet</strong>'e bas.</p>
+          </div>
+          <div id="avatar-picker-grid" class="avatar-picker" style="margin-bottom:1rem;gap:0.5rem;flex-wrap:wrap;">
+            <span style="color:var(--text-muted);font-size:0.8rem;">Yükleniyor...</span>
+          </div>
+          <button class="btn btn-primary btn-sm" id="av-save-btn" onclick="saveSelectedAvatar()" style="width:100%;padding:0.6rem;">💾 Kaydet</button>
+        </div>
+
+        <!-- HESAP BİLGİLERİ KARTI -->
+        <div class="game-sidebar" style="position:static;margin-bottom:1rem;padding:1.5rem;">
+          <h3 style="color:var(--text-bright);margin-bottom:1rem;font-size:1rem;border-bottom:1px solid var(--border);padding-bottom:0.6rem;">👤 Hesap Bilgileri</h3>
+          <div class="form-group">
+            <label>Kullanıcı Adı</label>
+            <input type="text" value="${user.username}" disabled style="opacity:0.6;" />
+          </div>
+          <div class="form-group">
+            <label>E-posta</label>
+            <input type="text" value="${user.email}" disabled style="opacity:0.6;" />
+          </div>
+          <div class="form-group">
+            <label>Rol</label>
+            <input type="text" value="${user.role === 'admin' ? '⭐ Admin' : '👤 Kullanıcı'}" disabled style="opacity:0.6;" />
+          </div>
+          <div class="form-group">
+            <label>Üyelik Tarihi</label>
+            <input type="text" value="${formatDate(user.created_at || user.createdAt)}" disabled style="opacity:0.6;" />
+          </div>
+        </div>
+
+        <!-- ŞİFRE DEĞİŞTİR KARTI -->
+        <div class="game-sidebar" style="position:static;margin-bottom:1rem;padding:1.5rem;">
+          <h3 style="color:var(--text-bright);margin-bottom:1rem;font-size:1rem;border-bottom:1px solid var(--border);padding-bottom:0.6rem;">🔑 Şifre Değiştir</h3>
+          <div id="pw-msg"></div>
+          <div class="form-group">
+            <label>Mevcut Şifre</label>
+            <input type="password" id="pw-current" placeholder="Mevcut şifreniz" autocomplete="current-password" />
+          </div>
+          <div class="form-group">
+            <label>Yeni Şifre</label>
+            <input type="password" id="pw-new" placeholder="En az 6 karakter" autocomplete="new-password" />
+          </div>
+          <div class="form-group">
+            <label>Yeni Şifre (Tekrar)</label>
+            <input type="password" id="pw-confirm" placeholder="Yeni şifrenizi tekrar girin" autocomplete="new-password" />
+          </div>
+          <button class="btn btn-primary" onclick="changePassword()" id="pw-btn" style="width:100%;">🔑 Şifreyi Güncelle</button>
+        </div>
+
+        <!-- ÇIKIŞ / HESAP SİL -->
+        <div style="display:flex;gap:0.8rem;flex-wrap:wrap;margin-top:0.5rem;">
+          <button class="btn btn-danger" onclick="logoutAndRedirect()">🚪 Çıkış Yap</button>
+          ${user.role !== 'admin' ? `<button class="btn btn-secondary" style="border:1px solid var(--accent-red);color:var(--accent-red);" onclick="deleteAccount()">🗑️ Hesabı Sil</button>` : ''}
+        </div>
+      </div>`;
+  }
+
+  async function deleteAccount() {
+    if (!confirm('Hesabınızı kalıcı olarak silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.')) return;
+    if (!confirm('Son kez onaylıyorsunuz — tüm sipariş ve verileriniz silinecek!')) return;
+    try {
+      const r = await fetch('/site/api/auth.php?action=delete_account', { method: 'POST' });
+      const d = await r.json();
+      if (d.ok) {
+        showToast('Hesabınız silindi.', 'success');
+        setTimeout(() => { window.location.href = 'index.html'; }, 1000);
+      } else {
+        showToast(d.msg || 'Hesap silinemedi.', 'error');
+      }
+    } catch(e) {
+      showToast('Bir hata oluştu.', 'error');
+    }
+  }
+
+  async function changePassword() {
+    const current = document.getElementById('pw-current').value.trim();
+    const newPass  = document.getElementById('pw-new').value.trim();
+    const confirm  = document.getElementById('pw-confirm').value.trim();
+    const msgEl    = document.getElementById('pw-msg');
+    const btn      = document.getElementById('pw-btn');
+
+    msgEl.innerHTML = '';
+    if (!current || !newPass || !confirm) {
+      msgEl.innerHTML = '<div class="alert alert-error" style="margin-bottom:1rem;">Tüm alanlar zorunludur.</div>';
+      return;
+    }
+    if (newPass !== confirm) {
+      msgEl.innerHTML = '<div class="alert alert-error" style="margin-bottom:1rem;">Yeni şifreler eşleşmiyor.</div>';
+      return;
+    }
+    if (newPass.length < 6) {
+      msgEl.innerHTML = '<div class="alert alert-error" style="margin-bottom:1rem;">Yeni şifre en az 6 karakter olmalıdır.</div>';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Güncelleniyor...';
+
+    try {
+      const res = await fetch('/site/api/auth.php?action=change_password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ current_password: current, new_password: newPass, confirm_password: confirm })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        msgEl.innerHTML = '<div class="alert alert-success" style="margin-bottom:1rem;">✅ Şifreniz başarıyla değiştirildi.</div>';
+        document.getElementById('pw-current').value = '';
+        document.getElementById('pw-new').value = '';
+        document.getElementById('pw-confirm').value = '';
+        showToast('Şifre başarıyla güncellendi!', 'success');
+      } else {
+        msgEl.innerHTML = `<div class="alert alert-error" style="margin-bottom:1rem;">${data.msg || 'Bir hata oluştu.'}</div>`;
+      }
+    } catch(e) {
+      msgEl.innerHTML = '<div class="alert alert-error" style="margin-bottom:1rem;">Bağlantı hatası.</div>';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '🔑 Şifreyi Güncelle';
+    }
+  }
+
+  async function logoutAndRedirect() {
+    await DB.logoutUser();
+    window.location.href = 'index.html';
+  }
+
+  // ---------- INIT ----------
+  (async () => {
+    await renderNavbar('');
+    user = await DB.getCurrentUser();
+    if (!user) { window.location.href = 'login.html'; return; }
+
+    const orders = await DB.getUserOrders().catch(() => []);
+    // Library: siparişlerden toplanan benzersiz ürünler
+    const libSet = new Set();
+    orders.forEach(o => { (o.items || []).forEach(item => { if (item.product_id) libSet.add(item.product_id); }); });
+    const library = [...libSet];
+    const totalSpent = orders.reduce((s, o) => s + parseFloat(o.total||0), 0);
+
+    document.getElementById('profile-header').innerHTML = `
+      <div class="profile-header">
+        <div class="profile-avatar" style="overflow:hidden;border-radius:50%;border:3px solid var(--accent);background:var(--bg-secondary);padding:0;flex-shrink:0;">${user.avatar && user.avatar.includes('/') ? `<img src="${avatarSrc(user.avatar)}" style="width:80px;height:80px;object-fit:cover;display:block;" onerror="this.style.display='none'" />` : `<span style="font-size:2.2rem;display:flex;align-items:center;justify-content:center;width:80px;height:80px;">${user.avatar || user.username[0].toUpperCase()}</span>`}</div>
+        <div class="profile-info">
+          <h2>${user.username}</h2>
+          <p>${user.email}</p>
+          <p style="font-size:0.78rem;margin-top:0.2rem;">Üyelik: ${formatDate(user.created_at || user.createdAt)}</p>
+          <div class="profile-stats">
+            <div class="profile-stat"><span class="num">${library.length}</span><span class="lbl">Oyun</span></div>
+            <div class="profile-stat"><span class="num">${orders.length}</span><span class="lbl">Sipariş</span></div>
+            <div class="profile-stat"><span class="num">₺${totalSpent.toLocaleString('tr-TR')}</span><span class="lbl">Harcanan</span></div>
+          </div>
+        </div>
+      </div>`;
+
+    renderLibrary();
+    renderOrders();
+    renderAccount();
+    // renderAccount DOM oluştuktan sonra profil/ klasörünü API'den çek ve grid'i doldur
+    setTimeout(() => _loadAvatarPicker('avatar-picker-grid'), 50);
+  })();
+</script>
+</body>
+</html>

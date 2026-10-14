@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎮</text></svg>">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GameStore — Oyun Satış Platformu</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<nav class="navbar" id="navbar"></nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-content">
+    <h1>Oyun Dünyasına<br><span>Hoş Geldin</span></h1>
+    <p>Binlerce oyun, anlık stok takibi ve güvenli alışveriş.<br>En iyi fiyatlarla favori oyunlarını bul.</p>
+    <div class="hero-btns" id="hero-btns">
+      <a href="store.html" class="btn btn-primary">🛒 Mağazayı Gez</a>
+      <a href="register.html" class="btn btn-secondary">Hesap Oluştur</a>
+    </div>
+  </div>
+</section>
+
+<!-- MAIN -->
+<div class="container">
+
+  <!-- FEATURED -->
+  <div class="featured-banner" id="featured-banner"></div>
+
+  <!-- DEALS SLIDER -->
+  <div id="deals-section" style="margin-bottom:2rem;display:none;">
+    <div class="deals-header">
+      <h2 class="section-title" style="margin-bottom:0;color:var(--accent-hover);">🔥 Günün Fırsatları</h2>
+      <div class="deals-nav">
+        <button class="deals-nav-btn" onclick="scrollDeals(-1)">&#8592;</button>
+        <button class="deals-nav-btn" onclick="scrollDeals(1)">&#8594;</button>
+      </div>
+    </div>
+    <div class="deals-slider-wrap">
+      <div class="deals-slider" id="deals-slider"></div>
+    </div>
+  </div>
+
+  <!-- CATEGORIES -->
+  <div style="margin-bottom:2rem;">
+    <h2 class="section-title">Kategoriler</h2>
+    <div id="category-filter" style="display:flex;gap:0.6rem;flex-wrap:wrap;margin-top:1rem;"></div>
+  </div>
+
+  <!-- POPULAR GAMES -->
+  <div style="margin-bottom:2rem;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;">
+      <h2 class="section-title" style="margin-bottom:0;">Popüler Oyunlar</h2>
+      <a href="store.html" class="btn btn-sm btn-secondary">Tümünü Gör →</a>
+    </div>
+    <div class="games-grid" id="popular-games"></div>
+  </div>
+
+  <!-- NEW ARRIVALS -->
+  <div style="margin-bottom:2rem;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;">
+      <h2 class="section-title" style="margin-bottom:0;">Ücretsiz Oyunlar</h2>
+      <a href="store.html?filter=free" class="btn btn-sm btn-secondary">Tümünü Gör →</a>
+    </div>
+    <div class="games-grid" id="free-games"></div>
+  </div>
+
+  <!-- LOW STOCK ALERT -->
+  <div id="low-stock-section" style="margin-bottom:2rem;display:none;">
+    <h2 class="section-title" style="color:var(--accent-orange);">⚠️ Son Stoklar!</h2>
+    <div class="games-grid" id="low-stock-games"></div>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <p>© 2026 GameStore — Tüm hakları saklıdır. &nbsp;|&nbsp; <a href="store.html">Mağaza</a> &nbsp;|&nbsp; <a href="cart.html">Sepet</a> &nbsp;|&nbsp; <a href="admin.html">Admin</a></p>
+  <span class="dev-credit">Developed by Kerim Avcı</span>
+</footer>
+
+<script src="js/data.js?v=4"></script>
+<script src="js/api.js?v=4"></script>
+<script src="js/utils.js?v=4"></script>
+<script>
+  function scrollDeals(dir) {
+    const slider = document.getElementById('deals-slider');
+    slider.scrollBy({ left: dir * 240, behavior: 'smooth' });
+  }
+
+  (async () => {
+    try {
+      await renderNavbar('index');
+    } catch(e) { console.error('Navbar hata:', e); }
+
+    try {
+      const [_heroUser, products, wishlistIds] = await Promise.all([
+        DB.getCurrentUser().catch(() => null),
+        DB.getProducts().catch(() => []),
+        DB.getWishlist().catch(() => [])
+      ]);
+
+      if (_heroUser) {
+        const heroBtns = document.getElementById('hero-btns');
+        if (heroBtns) {
+          heroBtns.innerHTML = `
+            <a href="store.html" class="btn btn-primary">🛒 Mağazayı Gez</a>
+            <a href="profile.html" class="btn btn-secondary">👤 Profilim</a>`;
+        }
+      }
+
+      // Featured banner - en pahalı ürün
+      const featured = [...products].filter(p => p.stock > 0).sort((a, b) => b.price - a.price)[0];
+      if (featured) {
+        const featImgHTML = featured.image
+          ? `<img src="${featured.image}" alt="${featured.title}" style="width:140px;height:100px;object-fit:cover;border-radius:8px;flex-shrink:0;" onerror="this.outerHTML='<span style=\\'font-size:3.5rem\\'>${featured.emoji||'🎮'}</span>'" />`
+          : `<span style="font-size:3.5rem;flex-shrink:0;">${featured.emoji || '🎮'}</span>`;
+        document.getElementById('featured-banner').innerHTML = `
+          ${featImgHTML}
+          <div class="featured-info">
+            <h2>${featured.title}</h2>
+            <p>${(featured.description || '').slice(0, 100)}...</p>
+            <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+              <a href="game.html?id=${featured.id}" class="btn btn-primary">Detaya Bak</a>
+              <span style="font-size:1.3rem;font-weight:800;color:var(--accent-hover)">${formatPrice(featured.price)}</span>
+              ${stockBadgeHTML(featured.stock)}
+            </div>
+          </div>`;
+      }
+
+      // Kategoriler
+      const categories = [...new Set(products.map(p => p.category))];
+      const catEl = document.getElementById('category-filter');
+      catEl.innerHTML = `<a href="store.html" class="btn btn-sm btn-secondary">Tümü</a>` +
+        categories.map(c =>
+          `<a href="store.html?cat=${encodeURIComponent(c)}" class="btn btn-sm btn-secondary">${c}</a>`
+        ).join('');
+
+      // Günün Fırsatları slider (indirimdeki oyunlar)
+      const deals = products.filter(p => p.original_price && p.original_price > p.price);
+      if (deals.length > 0) {
+        document.getElementById('deals-section').style.display = 'block';
+        document.getElementById('deals-slider').innerHTML = deals.map(p => gameCardHTML(p, _heroUser, wishlistIds)).join('');
+      }
+
+      // Popüler oyunlar (ilk 6, stok'a göre)
+      const popular = [...products].filter(p => p.stock > 0 && p.price > 0).slice(0, 6);
+      document.getElementById('popular-games').innerHTML = popular.map(p => gameCardHTML(p, _heroUser, wishlistIds)).join('') ||
+        '<p class="no-results">Oyun bulunamadı.</p>';
+
+      // Ücretsiz oyunlar
+      const free = products.filter(p => p.price === 0);
+      document.getElementById('free-games').innerHTML = free.map(p => gameCardHTML(p, _heroUser, wishlistIds)).join('') ||
+        '<p class="no-results">Ücretsiz oyun bulunamadı.</p>';
+
+      // Az stoklu oyunlar (1-5 arası)
+      const lowStock = products.filter(p => p.stock > 0 && p.stock <= 5);
+      if (lowStock.length > 0) {
+        document.getElementById('low-stock-section').style.display = 'block';
+        document.getElementById('low-stock-games').innerHTML = lowStock.map(p => gameCardHTML(p, _heroUser, wishlistIds)).join('');
+      }
+    } catch(err) {
+      console.error('Sayfa render hatası:', err);
+      document.getElementById('popular-games').innerHTML = '<p style="color:red">Hata: ' + err.message + '</p>';
+    }
+  })();
+</script>
+</body>
+</html>

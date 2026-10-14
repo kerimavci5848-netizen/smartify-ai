@@ -1,0 +1,596 @@
+  <!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎮</text></svg>">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Paneli — GameStore</title>
+  <link rel="stylesheet" href="css/style.css?v=3" />
+  <script>if((performance.getEntriesByType('navigation')[0]||{}).type==='reload'||performance.navigation&&performance.navigation.type===1){window.location.replace('index.html');}</script>
+</head>
+<body>
+
+<nav class="navbar" id="navbar"></nav>
+
+<div class="admin-layout">
+  <!-- SIDEBAR -->
+  <div class="admin-sidebar">
+    <h3>Yönetim</h3>
+    <div class="admin-nav-item active" onclick="showSection('dashboard', this)">📊 Dashboard</div>
+    <div class="admin-nav-item" onclick="showSection('products', this)">🎮 Oyunlar</div>
+    <div class="admin-nav-item" onclick="showSection('stock', this)">📦 Stok Yönetimi</div>
+    <div class="admin-nav-item" onclick="showSection('users', this)">👥 Kullanıcılar</div>
+    <div class="admin-nav-item" onclick="showSection('orders', this)">🧾 Siparişler</div>
+    <div class="admin-nav-item" onclick="showSection('addgame', this)">➕ Oyun Ekle</div>
+    <div class="admin-nav-item" onclick="showSection('support', this)">🎧 Destek Talepleri</div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="admin-content">
+
+    <!-- DASHBOARD -->
+    <div class="admin-section active" id="section-dashboard">
+      <h2 style="color:var(--text-bright);margin-bottom:1.5rem;">📊 Dashboard</h2>
+      <div class="stats-grid" id="stats-grid"></div>
+      <h3 style="color:var(--text-bright);margin-bottom:1rem;">⚠️ Kritik Stok Durumu</h3>
+      <div id="critical-stock"></div>
+    </div>
+
+    <!-- PRODUCTS -->
+    <div class="admin-section" id="section-products">
+      <h2 style="color:var(--text-bright);margin-bottom:1.5rem;">🎮 Oyun Listesi</h2>
+      <div class="filter-bar" style="margin-bottom:1rem;">
+        <input type="text" id="prod-search" placeholder="Oyun ara..." oninput="renderProducts()" style="min-width:200px;" />
+        <select id="prod-cat" onchange="renderProducts()">
+          <option value="">Tüm Kategoriler</option>
+        </select>
+      </div>
+      <div id="products-table"></div>
+    </div>
+
+    <!-- STOCK -->
+    <div class="admin-section" id="section-stock">
+      <h2 style="color:var(--text-bright);margin-bottom:1.5rem;">📦 Stok Yönetimi</h2>
+      <div id="stock-table"></div>
+    </div>
+
+    <!-- USERS -->
+    <div class="admin-section" id="section-users">
+      <h2 style="color:var(--text-bright);margin-bottom:1.5rem;">👥 Kullanıcı Listesi</h2>
+      <div id="users-table"></div>
+    </div>
+
+    <!-- ORDERS -->
+    <div class="admin-section" id="section-orders">
+      <h2 style="color:var(--text-bright);margin-bottom:1.5rem;">🧾 Tüm Siparişler</h2>
+      <div id="orders-table"></div>
+    </div>
+
+    <!-- SUPPORT TICKETS -->
+    <div class="admin-section" id="section-support">
+      <h2 style="color:var(--text-bright);margin-bottom:1.5rem;">🎧 Destek Talepleri</h2>
+      <div style="display:flex;gap:0.6rem;margin-bottom:1rem;flex-wrap:wrap;">
+        <select id="ticket-filter" onchange="renderSupport()" style="background:rgba(0,0,0,0.4);border:1px solid var(--border);border-radius:4px;padding:0.4rem 0.8rem;color:var(--text-primary);font-size:0.88rem;outline:none;">
+          <option value="">Tüm Talepler</option>
+          <option value="open">Beklemede</option>
+          <option value="closed">Yanıtlandı</option>
+        </select>
+      </div>
+      <div id="support-table"></div>
+    </div>
+
+    <!-- ADD GAME -->
+    <div class="admin-section" id="section-addgame">
+      <h2 style="color:var(--text-bright);margin-bottom:1.5rem;" id="addgame-title">➕ Yeni Oyun Ekle</h2>
+      <div style="max-width:560px;">
+        <div id="addgame-msg"></div>
+        <div class="form-group">
+          <label>Oyun Adı *</label>
+          <input type="text" id="g-title" placeholder="Oyun adı" />
+        </div>
+        <div class="form-group">
+          <label>Açıklama *</label>
+          <textarea id="g-desc" placeholder="Oyun açıklaması..."></textarea>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+          <div class="form-group">
+            <label>Fiyat (₺) *</label>
+            <input type="number" id="g-price" placeholder="0" min="0" />
+          </div>
+          <div class="form-group">
+            <label>Stok Adedi *</label>
+            <input type="number" id="g-stock" placeholder="10" min="0" />
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+          <div class="form-group">
+            <label>Kategori *</label>
+            <input type="text" id="g-cat" placeholder="RPG, FPS, Aksiyon..." />
+          </div>
+          <div class="form-group">
+            <label>Geliştirici</label>
+            <input type="text" id="g-dev" placeholder="Studio adı" />
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+          <div class="form-group">
+            <label>Yayın Yılı</label>
+            <input type="number" id="g-year" placeholder="2024" min="1970" max="2030" />
+          </div>
+          <div class="form-group">
+            <label>Emoji</label>
+            <input type="text" id="g-emoji" placeholder="🎮" maxlength="4" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Kapak Resmi URL</label>
+          <input type="text" id="g-image" placeholder="https://... veya oyunlar/oyun.jpg" />
+        </div>
+        <div class="form-group">
+          <label>İndirimli Fiyat — Eski Fiyat (₺) <span style="color:var(--text-muted);font-size:0.8rem;">(indirim badge'i için)</span></label>
+          <input type="number" id="g-orig-price" placeholder="Boş bırakılırsa indirim uygulanmaz" min="0" />
+        </div>
+        <div class="form-group">
+          <label>Etiketler (virgülle ayır)</label>
+          <input type="text" id="g-tags" placeholder="Aksiyon, RPG, Çok Oyunculu" />
+        </div>
+        <input type="hidden" id="g-edit-id" />
+        <div style="display:flex;gap:0.8rem;margin-top:0.5rem;">
+          <button class="btn btn-primary" onclick="saveGame()">💾 Kaydet</button>
+          <button class="btn btn-secondary" onclick="clearGameForm()">Sıfırla</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Edit Stock Modal -->
+<div class="modal-overlay" id="stock-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>📦 Stok Güncelle</h3>
+      <button class="modal-close" onclick="closeStockModal()">×</button>
+    </div>
+    <div id="stock-modal-body"></div>
+    <div style="display:flex;gap:0.8rem;margin-top:1.5rem;">
+      <button class="btn btn-primary" style="flex:1;" onclick="saveStock()">Güncelle</button>
+      <button class="btn btn-secondary" style="flex:1;" onclick="closeStockModal()">İptal</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirm Modal -->
+<div class="modal-overlay" id="delete-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>🗑️ Oyunu Sil</h3>
+      <button class="modal-close" onclick="closeDeleteModal()">×</button>
+    </div>
+    <p id="delete-msg" style="color:var(--text-muted);margin-bottom:1rem;"></p>
+    <div style="display:flex;gap:0.8rem;margin-top:1rem;">
+      <button class="btn btn-danger" style="flex:1;" onclick="confirmDelete()">Sil</button>
+      <button class="btn btn-secondary" style="flex:1;" onclick="closeDeleteModal()">İptal</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/data.js?v=3"></script>
+    <script src="js/api.js?v=3"></script>
+<script src="js/utils.js?v=3"></script>
+<script>
+  
+  let deleteTargetId = null;
+  let stockEditId = null;
+  let replyTicketId = null;
+  let _adminProducts = [];
+  let _adminTickets = [];
+
+  // ===== SECTION SWITCH =====
+  function showSection(name, el) {
+    document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.admin-nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('section-' + name).classList.add('active');
+    el.classList.add('active');
+    if (name === 'dashboard') renderDashboard();
+    else if (name === 'products') renderProducts();
+    else if (name === 'stock') renderStockTable();
+    else if (name === 'users') renderUsers();
+    else if (name === 'orders') renderOrders();
+    else if (name === 'support') renderSupport();
+  }
+
+  // ===== DASHBOARD =====
+  async function renderDashboard() {
+    _adminProducts = await DB.getProducts();
+    const orders = await DB.getAllOrders();
+    const totalRevenue = orders.reduce((s, o) => s + parseFloat(o.total||0), 0);
+    const outOfStock = _adminProducts.filter(p => p.stock <= 0).length;
+    const lowStock = _adminProducts.filter(p => p.stock > 0 && p.stock <= 5).length;
+
+    document.getElementById('stats-grid').innerHTML = `
+      <div class="stat-card"><div class="stat-icon">🎮</div><div class="stat-num">${_adminProducts.length}</div><div class="stat-label">Toplam Oyun</div></div>
+      <div class="stat-card"><div class="stat-icon">🧾</div><div class="stat-num">${orders.length}</div><div class="stat-label">Sipariş</div></div>
+      <div class="stat-card"><div class="stat-icon">💰</div><div class="stat-num">₺${totalRevenue.toLocaleString('tr-TR')}</div><div class="stat-label">Toplam Gelir</div></div>
+      <div class="stat-card"><div class="stat-icon" style="color:var(--accent-red)">❌</div><div class="stat-num" style="color:var(--accent-red)">${outOfStock}</div><div class="stat-label">Tükenmiş</div></div>
+      <div class="stat-card"><div class="stat-icon" style="color:var(--accent-orange)">⚠️</div><div class="stat-num" style="color:var(--accent-orange)">${lowStock}</div><div class="stat-label">Az Stok (≤5)</div></div>`;
+
+    const critical = _adminProducts.filter(p => p.stock <= 5).sort((a, b) => a.stock - b.stock);
+    if (critical.length === 0) {
+      document.getElementById('critical-stock').innerHTML = '<div class="alert alert-success">Tüm ürünlerin stoğu yeterli.</div>';
+      return;
+    }
+    document.getElementById('critical-stock').innerHTML = `
+      <table class="data-table">
+        <thead><tr><th>Oyun</th><th>Kategori</th><th>Stok</th><th>Durum</th><th>İşlem</th></tr></thead>
+        <tbody>
+          ${critical.map(p => `
+            <tr>
+              <td>${p.emoji} ${p.title}</td>
+              <td>${p.category}</td>
+              <td><strong style="color:${p.stock <= 0 ? 'var(--accent-red)' : 'var(--accent-orange)'}">${p.stock}</strong></td>
+              <td>${stockBadgeHTML(p.stock)}</td>
+              <td><button class="btn btn-sm btn-primary" onclick="openStockModal('${p.id}')">Stok Güncelle</button></td>
+            </tr>`).join('')}
+        </tbody>
+      </table>`;
+  }
+
+  // ===== PRODUCTS =====
+  async function renderProducts() {
+    _adminProducts = await DB.getProducts();
+    DB._products = null; // cache temizle
+    _adminProducts = await DB.getProducts();
+
+    const search = (document.getElementById('prod-search')?.value || '').toLowerCase();
+    const cat = document.getElementById('prod-cat')?.value || '';
+
+    const cats = [...new Set(_adminProducts.map(p => p.category))];
+    const catSel = document.getElementById('prod-cat');
+    if (catSel && catSel.options.length <= 1) {
+      cats.forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; catSel.appendChild(o); });
+    }
+
+    let products = [..._adminProducts];
+    if (search) products = products.filter(p => p.title.toLowerCase().includes(search));
+    if (cat) products = products.filter(p => p.category === cat);
+
+    document.getElementById('products-table').innerHTML = `
+      <table class="data-table">
+        <thead><tr><th>Oyun</th><th>Kategori</th><th>Fiyat</th><th>Stok</th><th>Durum</th><th>İşlemler</th></tr></thead>
+        <tbody>
+          ${products.map(p => `
+            <tr>
+              <td><strong>${p.emoji || '🎮'} ${p.title}</strong><br><span style="font-size:0.75rem;color:var(--text-muted)">${p.developer || ''}</span></td>
+              <td>${p.category}</td>
+              <td>${formatPrice(p.price)}</td>
+              <td><strong style="color:${p.stock <= 0 ? 'var(--accent-red)' : p.stock <= 5 ? 'var(--accent-orange)' : 'var(--accent-green)'}">${p.stock}</strong></td>
+              <td>${stockBadgeHTML(p.stock)}</td>
+              <td style="display:flex;gap:0.4rem;flex-wrap:wrap;">
+                <button class="btn btn-sm btn-secondary" onclick="editGame('${p.id}')">Düzenle</button>
+                <button class="btn btn-sm btn-primary" onclick="openStockModal('${p.id}')">Stok</button>
+                <button class="btn btn-sm btn-danger" onclick="openDeleteModal('${p.id}','${p.title.replace(/'/g, "\\'")}')">Sil</button>
+              </td>
+            </tr>`).join('')}
+        </tbody>
+      </table>`;
+  }
+
+  // ===== STOCK TABLE =====
+  async function renderStockTable() {
+    if (_adminProducts.length === 0) _adminProducts = await DB.getProducts();
+    const products = [..._adminProducts].sort((a, b) => a.stock - b.stock);
+    document.getElementById('stock-table').innerHTML = `
+      <table class="data-table">
+        <thead><tr><th>Oyun</th><th>Mevcut Stok</th><th>Durum</th><th>Hızlı Güncelle</th></tr></thead>
+        <tbody>
+          ${products.map(p => `
+            <tr>
+              <td>${p.emoji || '🎮'} <strong>${p.title}</strong></td>
+              <td><strong style="font-size:1.1rem;color:${p.stock <= 0 ? 'var(--accent-red)' : p.stock <= 5 ? 'var(--accent-orange)' : 'var(--accent-green)'}">${p.stock}</strong></td>
+              <td>${stockBadgeHTML(p.stock)}</td>
+              <td style="display:flex;align-items:center;gap:0.5rem;">
+                <button class="btn btn-sm btn-secondary" onclick="quickStock('${p.id}',-1)" ${p.stock<=0?'disabled':''}>−1</button>
+                <button class="btn btn-sm btn-secondary" onclick="quickStock('${p.id}',1)">+1</button>
+                <button class="btn btn-sm btn-secondary" onclick="quickStock('${p.id}',10)">+10</button>
+                <button class="btn btn-sm btn-primary" onclick="openStockModal('${p.id}')">Manuel</button>
+              </td>
+            </tr>`).join('')}
+        </tbody>
+      </table>`;
+  }
+
+  async function quickStock(id, delta) {
+    const p = _adminProducts.find(x => x.id === id);
+    if (!p) return;
+    const newStock = Math.max(0, parseInt(p.stock) + delta);
+    await DB.updateProduct({ ...p, stock: newStock });
+    DB._products = null;
+    _adminProducts = await DB.getProducts();
+    renderStockTable();
+    renderDashboard();
+    showToast(`Stok ${delta > 0 ? '+' : ''}${delta} güncellendi.`, 'success');
+  }
+
+  // ===== STOCK MODAL =====
+  function openStockModal(id) {
+    stockEditId = id;
+    const p = _adminProducts.find(x => x.id === id);
+    if (!p) return;
+    document.getElementById('stock-modal-body').innerHTML = `
+      <p style="color:var(--text-muted);margin-bottom:1rem;">${p.emoji || '🎮'} <strong style="color:var(--text-bright)">${p.title}</strong></p>
+      <div class="form-group">
+        <label>Mevcut Stok</label>
+        <input type="text" value="${p.stock}" disabled style="opacity:0.6;" />
+      </div>
+      <div class="form-group">
+        <label>Yeni Stok Miktarı</label>
+        <input type="number" id="new-stock-val" min="0" placeholder="Yeni stok değeri" value="${p.stock}" />
+      </div>`;
+    document.getElementById('stock-modal').classList.add('open');
+  }
+
+  function closeStockModal() {
+    document.getElementById('stock-modal').classList.remove('open');
+    stockEditId = null;
+  }
+
+  async function saveStock() {
+    const val = parseInt(document.getElementById('new-stock-val').value);
+    if (isNaN(val) || val < 0) { showToast('Geçerli bir stok değeri girin.', 'error'); return; }
+    const p = _adminProducts.find(x => x.id === stockEditId);
+    if (!p) return;
+    await DB.updateProduct({ ...p, stock: val });
+    DB._products = null;
+    _adminProducts = await DB.getProducts();
+    closeStockModal();
+    showToast('Stok güncellendi!', 'success');
+    renderStockTable();
+    renderProducts();
+    renderDashboard();
+  }
+
+  // ===== USERS =====
+  async function renderUsers() {
+    const r = await fetch('/site/api/auth.php?action=list_users');
+    const data = await r.json();
+    if (!data.ok) {
+      document.getElementById('users-table').innerHTML = '<div class="alert alert-error">Kullanıcılar yüklenemedi.</div>';
+      return;
+    }
+    const users = data.users || [];
+    document.getElementById('users-table').innerHTML = `
+      <p style="color:var(--text-muted);font-size:0.88rem;margin-bottom:1rem;">${users.length} kullanıcı kayıtlı</p>
+      <table class="data-table">
+        <thead><tr><th>Kullanıcı</th><th>E-posta</th><th>Rol</th><th>Üyelik</th></tr></thead>
+        <tbody>
+          ${users.map(u => `
+            <tr>
+              <td>
+                <div style="display:flex;align-items:center;gap:0.6rem;">
+                  ${u.avatar && u.avatar.includes('/') ? `<img src="${u.avatar}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:1px solid var(--border);" onerror="this.style.display='none'" />` : `<span style="font-size:1.2rem;">${u.avatar || '👤'}</span>`}
+                  <strong>${u.username}</strong>
+                </div>
+              </td>
+              <td>${u.email}</td>
+              <td>${u.role === 'admin' ? '<span style="color:var(--accent-hover)">⭐ Admin</span>' : '<span style="color:var(--text-muted)">👤 Kullanıcı</span>'}</td>
+              <td style="font-size:0.78rem;color:var(--text-muted)">${formatDate(u.created_at)}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>`;
+  }
+
+  // ===== ORDERS =====
+  async function renderOrders() {
+    const orders = await DB.getAllOrders();
+    if (orders.length === 0) {
+      document.getElementById('orders-table').innerHTML = '<div class="alert alert-info">Henüz sipariş yok.</div>';
+      return;
+    }
+    document.getElementById('orders-table').innerHTML = `
+      <table class="data-table">
+        <thead><tr><th>Sipariş No</th><th>Kullanıcı</th><th>Oyunlar</th><th>Toplam</th><th>Tarih</th></tr></thead>
+        <tbody>
+          ${orders.map(o => {
+            const games = (o.items || []).map(i => i.title).join(', ');
+            return `
+              <tr>
+                <td><code style="font-size:0.8rem;color:var(--accent-hover)">#${shortId(o.id)}</code></td>
+                <td>${o.username || '-'}</td>
+                <td style="max-width:280px;font-size:0.83rem;">${games}</td>
+                <td><strong style="color:var(--accent-hover)">${formatPrice(o.total)}</strong></td>
+                <td style="font-size:0.78rem;color:var(--text-muted)">${formatDate(o.created_at || o.createdAt)}</td>
+              </tr>`;
+          }).join('')}
+        </tbody>
+      </table>`;
+  }
+
+  // ===== ADD / EDIT GAME =====
+  function clearGameForm() {
+    ['g-title','g-desc','g-price','g-stock','g-cat','g-dev','g-year','g-emoji','g-tags','g-image','g-orig-price'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    document.getElementById('g-edit-id').value = '';
+    document.getElementById('addgame-title').textContent = '➕ Yeni Oyun Ekle';
+    document.getElementById('addgame-msg').innerHTML = '';
+  }
+
+  function editGame(id) {
+    const p = _adminProducts.find(x => x.id === id);
+    if (!p) return;
+    const navItems = document.querySelectorAll('.admin-nav-item');
+    showSection('addgame', navItems[navItems.length - 2]);
+    document.getElementById('g-title').value = p.title;
+    document.getElementById('g-desc').value = p.description;
+    document.getElementById('g-price').value = p.price;
+    document.getElementById('g-stock').value = p.stock;
+    document.getElementById('g-cat').value = p.category;
+    document.getElementById('g-dev').value = p.developer || '';
+    document.getElementById('g-year').value = p.release_year || p.releaseYear || '';
+    document.getElementById('g-emoji').value = p.emoji || '';
+    document.getElementById('g-image').value = p.image || '';
+    document.getElementById('g-orig-price').value = p.original_price || '';
+    const tags = typeof p.tags === 'string' ? JSON.parse(p.tags || '[]') : (p.tags || []);
+    document.getElementById('g-tags').value = tags.join(', ');
+    document.getElementById('g-edit-id').value = p.id;
+    document.getElementById('addgame-title').textContent = '✏️ Oyun Düzenle';
+  }
+
+  async function saveGame() {
+    const title = document.getElementById('g-title').value.trim();
+    const desc = document.getElementById('g-desc').value.trim();
+    const price = parseFloat(document.getElementById('g-price').value) || 0;
+    const stock = parseInt(document.getElementById('g-stock').value) || 0;
+    const cat = document.getElementById('g-cat').value.trim();
+    const dev = document.getElementById('g-dev').value.trim();
+    const year = parseInt(document.getElementById('g-year').value) || null;
+    const emoji = document.getElementById('g-emoji').value.trim() || '🎮';
+    const image = document.getElementById('g-image').value.trim();
+    const origPriceRaw = document.getElementById('g-orig-price').value.trim();
+    const original_price = origPriceRaw !== '' ? parseFloat(origPriceRaw) : null;
+    const tagsRaw = document.getElementById('g-tags').value.trim();
+    const tags = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean) : [];
+    const editId = document.getElementById('g-edit-id').value;
+    const msgEl = document.getElementById('addgame-msg');
+
+    if (!title || !desc || !cat) {
+      msgEl.innerHTML = '<div class="alert alert-error">Oyun adı, açıklama ve kategori zorunludur.</div>';
+      return;
+    }
+
+    const payload = { title, description: desc, price, original_price, stock, category: cat, developer: dev, release_year: year, emoji, image, tags: JSON.stringify(tags) };
+
+    if (editId) {
+      const existing = _adminProducts.find(x => x.id === editId) || {};
+      const result = await DB.updateProduct({ ...existing, ...payload, id: editId });
+      if (result.ok) {
+        msgEl.innerHTML = '<div class="alert alert-success">Oyun başarıyla güncellendi!</div>';
+        showToast('Oyun güncellendi.', 'success');
+      } else {
+        msgEl.innerHTML = `<div class="alert alert-error">${result.msg}</div>`;
+      }
+    } else {
+      const result = await DB.addProduct(payload);
+      if (result.ok) {
+        msgEl.innerHTML = '<div class="alert alert-success">Oyun başarıyla eklendi!</div>';
+        showToast('Yeni oyun eklendi!', 'success');
+        clearGameForm();
+      } else {
+        msgEl.innerHTML = `<div class="alert alert-error">${result.msg}</div>`;
+      }
+    }
+    DB._products = null;
+    _adminProducts = await DB.getProducts();
+  }
+
+  // ===== DELETE =====
+  function openDeleteModal(id, title) {
+    deleteTargetId = id;
+    document.getElementById('delete-msg').innerHTML = `<strong style="color:var(--text-bright)">"${title}"</strong> oyununu silmek istediğinize emin misiniz? Bu işlem geri alınamaz.`;
+    document.querySelector('#delete-modal .btn-danger').textContent = 'Sil';
+    document.querySelector('#delete-modal .btn-danger').onclick = confirmDelete;
+    document.querySelector('#delete-modal .modal-header h3').textContent = '🗑️ Oyunu Sil';
+    document.getElementById('delete-modal').classList.add('open');
+  }
+
+  function closeDeleteModal() {
+    document.getElementById('delete-modal').classList.remove('open');
+    deleteTargetId = null;
+  }
+
+  async function confirmDelete() {
+    if (!deleteTargetId) return;
+    await DB.deleteProduct(deleteTargetId);
+    DB._products = null;
+    _adminProducts = await DB.getProducts();
+    closeDeleteModal();
+    showToast('Oyun silindi.', 'success');
+    renderProducts();
+    renderDashboard();
+  }
+
+  // Modal dışına tıklayınca kapat
+  ['stock-modal','delete-modal'].forEach(id => {
+    document.getElementById(id).addEventListener('click', function(e) {
+      if (e.target === this) this.classList.remove('open');
+    });
+  });
+
+  // ===== SUPPORT =====
+  async function renderSupport() {
+    const filter = document.getElementById('ticket-filter')?.value || '';
+    _adminTickets = await DB.getSupportTickets();
+    let tickets = [..._adminTickets].reverse();
+    if (filter) tickets = tickets.filter(t => t.status === filter);
+
+    if (tickets.length === 0) {
+      document.getElementById('support-table').innerHTML = '<div class="alert alert-info">Henüz destek talebi yok.</div>';
+      return;
+    }
+
+    document.getElementById('support-table').innerHTML = `
+      <table class="data-table">
+        <thead><tr><th>No</th><th>Kullanıcı</th><th>Kategori</th><th>Konu</th><th>Durum</th><th>Tarih</th><th>İşlem</th></tr></thead>
+        <tbody>
+          ${tickets.map(t => `
+            <tr>
+              <td><code style="font-size:0.78rem;color:var(--accent-light)">#${shortId(t.id)}</code></td>
+              <td><strong>${t.username}</strong><br><span style="font-size:0.74rem;color:var(--text-muted)">${t.email}</span></td>
+              <td><span style="font-size:0.8rem;">${t.category}</span></td>
+              <td style="max-width:200px;font-size:0.85rem;">${t.subject}<br><span style="font-size:0.76rem;color:var(--text-muted)">${t.message.slice(0,60)}${t.message.length>60?'...':''}</span></td>
+              <td><span style="font-size:0.75rem;padding:0.15rem 0.5rem;border-radius:3px;font-weight:700;${t.status==='closed'?'background:rgba(39,174,96,0.15);color:var(--accent-green);border:1px solid rgba(39,174,96,0.3)':'background:rgba(230,126,34,0.15);color:var(--accent-orange);border:1px solid rgba(230,126,34,0.3)'}">
+                ${t.status==='closed'?'✅ Yanıtlandı':'⏳ Beklemede'}
+              </span></td>
+              <td style="font-size:0.76rem;color:var(--text-muted)">${formatDate(t.created_at || t.createdAt)}</td>
+              <td><button class="btn btn-sm btn-primary" onclick="openReplyModal('${t.id}')">Yanıtla</button></td>
+            </tr>
+            ${t.reply ? `<tr><td colspan="7" style="background:rgba(192,57,43,0.05);font-size:0.82rem;color:var(--text-muted);padding:0.5rem 1rem;"><strong style="color:var(--accent-light)">Admin Yanıtı:</strong> ${t.reply}</td></tr>` : ''}`).join('')}
+        </tbody>
+      </table>`;
+  }
+
+  function openReplyModal(id) {
+    replyTicketId = id;
+    const t = _adminTickets.find(x => x.id === id);
+    if (!t) return;
+    document.getElementById('delete-msg').innerHTML = `
+      <strong style="color:var(--text-bright)">${t.subject}</strong>
+      <p style="margin-top:0.5rem;font-size:0.85rem;color:var(--text-muted)">${t.message}</p>
+      <div class="form-group" style="margin-top:1rem;">
+        <label>Yanıtınız</label>
+        <textarea id="reply-text" style="width:100%;background:rgba(0,0,0,0.4);border:1px solid var(--border);border-radius:4px;padding:0.7rem;color:var(--text-bright);min-height:80px;outline:none;" placeholder="Kullanıcıya yanıtınızı yazın...">${t.reply || ''}</textarea>
+      </div>`;
+    document.querySelector('#delete-modal .btn-danger').textContent = '📨 Yanıt Gönder';
+    document.querySelector('#delete-modal .btn-danger').onclick = sendReply;
+    document.querySelector('#delete-modal .modal-header h3').textContent = '💬 Talebi Yanıtla';
+    document.getElementById('delete-modal').classList.add('open');
+  }
+
+  async function sendReply() {
+    const reply = document.getElementById('reply-text').value.trim();
+    if (!reply) { showToast('Yanıt metni boş olamaz.', 'error'); return; }
+    await DB.replyTicket(replyTicketId, reply);
+    closeDeleteModal();
+    showToast('Yanıt gönderildi!', 'success');
+    renderSupport();
+  }
+
+  // ===== INIT =====
+  (async () => {
+    await renderNavbar('');
+    const user = await DB.getCurrentUser();
+    if (!user || user.role !== 'admin') {
+      window.location.href = 'login.html';
+      return;
+    }
+    renderDashboard();
+  })();
+</script>
+<footer>
+  <p>© 2026 GameStore &nbsp;|&nbsp; <a href="store.html">Mağaza</a></p>
+  <span class="dev-credit">Developed by Kerim Avcı</span>
+</footer>
+</body>
+</html>

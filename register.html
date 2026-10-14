@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎮</text></svg>">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kayıt Ol — GameStore</title>
+  <link rel="stylesheet" href="css/style.css?v=3" />
+  <script>if((performance.getEntriesByType('navigation')[0]||{}).type==='reload'||performance.navigation&&performance.navigation.type===1){window.location.replace('index.html');}</script>
+</head>
+<body>
+
+<div class="auth-page">
+  <div class="auth-box">
+    <div class="auth-logo">🎮</div>
+    <h2>Hesap Oluştur</h2>
+    <p class="auth-sub">GameStore'a ücretsiz katılın</p>
+
+    <div id="msg"></div>
+
+    <form id="register-form" onsubmit="handleRegister(event)">
+      <div class="form-group">
+        <label>Kullanıcı Adı</label>
+        <input type="text" id="username" placeholder="kullanici_adi" required minlength="3" maxlength="20" autocomplete="username" />
+        <div class="form-error" id="err-username"></div>
+      </div>
+      <div class="form-group">
+        <label>E-posta</label>
+        <input type="email" id="email" placeholder="ornek@email.com" required autocomplete="email" />
+        <div class="form-error" id="err-email"></div>
+      </div>
+      <div class="form-group">
+        <label>Şifre</label>
+        <input type="password" id="password" placeholder="En az 6 karakter" required minlength="6" autocomplete="new-password" />
+        <div class="form-error" id="err-password"></div>
+      </div>
+      <div class="form-group">
+        <label>Şifre Tekrar</label>
+        <input type="password" id="password2" placeholder="Şifrenizi tekrar girin" required autocomplete="new-password" />
+        <div class="form-error" id="err-password2"></div>
+      </div>
+      <div class="form-group">
+        <label>Avatar Seç</label>
+        <!-- Avatar seçeneklerini .avatar-option sınıfıyla buraya ekleyin.
+             data-avatar="profil/resim.jpg" veya sadece emoji içerik olarak kullanın.
+             Resim için: <div class="avatar-option" data-avatar="profil/resim.jpg" style="overflow:hidden;padding:0;"><img src="profil/resim.jpg" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" /></div>
+             Emoji için: <div class="avatar-option" data-avatar="🎮" style="font-size:1.4rem;">🎮</div>
+        -->
+        <div class="avatar-picker" id="avatar-picker">
+          <!-- Kendi resimlerinizi buraya ekleyin -->
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;padding:0.8rem;font-size:1rem;margin-top:0.5rem;">Kayıt Ol</button>
+    </form>
+
+    <div class="auth-footer">
+      Zaten hesabınız var mı? <a href="login.html">Giriş Yap</a>
+    </div>
+    <div class="auth-footer" style="margin-top:0.5rem;">
+      <a href="index.html" style="color:var(--text-muted);">← Ana Sayfaya Dön</a>
+    </div>
+  </div>
+</div>
+
+<script src="js/data.js?v=3"></script>
+    <script src="js/api.js?v=3"></script>
+<script src="js/utils.js?v=3"></script>
+<script>
+  (async () => {
+    const u = await DB.getCurrentUser();
+    if (u) window.location.href = 'index.html';
+  })();
+
+  let selectedAvatar = '🎮'; // varsayılan emoji — API'den ilk resim gelince güncellenir
+
+  function _onRegisterAvatarClick() {
+    document.querySelectorAll('#avatar-picker .avatar-option').forEach(o => o.classList.remove('selected'));
+    this.classList.add('selected');
+    selectedAvatar = this.dataset.avatar
+      || (this.querySelector('img') ? this.querySelector('img').getAttribute('src') : null)
+      || this.textContent.trim();
+  }
+
+  // Sayfa yüklenince profil/ klasörünü API'den çek, ızgarayı doldur
+  fetch('/site/api/auth.php?action=get_avatars')
+    .then(r => r.json())
+    .then(data => {
+      if (!data.ok) return;
+      const grid = document.getElementById('avatar-picker');
+      if (!grid) return;
+      grid.innerHTML = data.avatars.map((src, i) =>
+        `<div class="avatar-option${i === 0 ? ' selected' : ''}" data-avatar="${src}" style="overflow:hidden;padding:0;width:56px;height:56px;border-radius:50%;border:2px solid var(--border);cursor:pointer;flex-shrink:0;background:var(--bg-secondary);">
+          <img src="/site/${src}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentElement.style.display='none'" loading="lazy" />
+        </div>`
+      ).join('');
+      if (data.avatars.length > 0) selectedAvatar = data.avatars[0];
+      grid.querySelectorAll('.avatar-option').forEach(el => el.addEventListener('click', _onRegisterAvatarClick));
+    })
+    .catch(e => console.warn('Avatar yüklenemedi', e));
+
+  function clearErrors() {
+    ['err-username','err-email','err-password','err-password2'].forEach(id => {
+      document.getElementById(id).textContent = '';
+    });
+  }
+
+  async function handleRegister(e) {
+    e.preventDefault();
+    clearErrors();
+
+    const username = document.getElementById('username').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const password2 = document.getElementById('password2').value;
+    const msgEl = document.getElementById('msg');
+    msgEl.innerHTML = '';
+
+    let valid = true;
+
+    if (username.length < 3) {
+      document.getElementById('err-username').textContent = 'Kullanıcı adı en az 3 karakter olmalı.';
+      valid = false;
+    }
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      document.getElementById('err-email').textContent = 'Geçerli bir e-posta giriniz.';
+      valid = false;
+    }
+    if (password.length < 6) {
+      document.getElementById('err-password').textContent = 'Şifre en az 6 karakter olmalı.';
+      valid = false;
+    }
+    if (password !== password2) {
+      document.getElementById('err-password2').textContent = 'Şifreler eşleşmiyor.';
+      valid = false;
+    }
+    if (!valid) return;
+
+    const btn = e.target.querySelector('button[type=submit]');
+    btn.disabled = true; btn.textContent = 'Kaydediliyor...';
+
+    const result = await DB.registerUser({ username, email, password, avatar: selectedAvatar });
+    if (result.ok) {
+      msgEl.innerHTML = '<div class="alert alert-success">Kayıt başarılı! Hoş geldiniz 🎮</div>';
+      setTimeout(() => { window.location.href = 'index.html'; }, 900);
+    } else {
+      msgEl.innerHTML = `<div class="alert alert-error">${result.msg}</div>`;
+      btn.disabled = false; btn.textContent = 'Kayıt Ol';
+    }
+  }
+</script>
+<footer>
+  <p>© 2026 GameStore &nbsp;|&nbsp; <a href="store.html">Mağaza</a></p>
+  <span class="dev-credit">Developed by Kerim Avcı</span>
+</footer>
+</body>
+</html>

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎮</text></svg>">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kütüphanem — GameStore</title>
+  <link rel="stylesheet" href="css/style.css?v=3" />
+  <script>if((performance.getEntriesByType('navigation')[0]||{}).type==='reload'||performance.navigation&&performance.navigation.type===1){window.location.replace('index.html');}</script>
+</head>
+<body>
+
+<nav class="navbar" id="navbar"></nav>
+
+<div class="container">
+  <div class="breadcrumb">
+    <a href="index.html">Ana Sayfa</a> › <span>Kütüphanem</span>
+  </div>
+
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1.5rem;">
+    <h1 class="section-title" style="margin-bottom:0;">📚 Oyun Kütüphanem</h1>
+    <div style="display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap;">
+      <input type="text" id="lib-search" placeholder="🔍 Kütüphanede ara..." style="background:rgba(0,0,0,0.4);border:1px solid var(--border);border-radius:4px;padding:0.4rem 0.8rem;color:var(--text-primary);font-size:0.88rem;outline:none;" oninput="render()" />
+      <select id="lib-sort" onchange="render()" style="background:rgba(0,0,0,0.4);border:1px solid var(--border);border-radius:4px;padding:0.4rem 0.8rem;color:var(--text-primary);font-size:0.88rem;outline:none;">
+        <option value="default">Eklenme Sırası</option>
+        <option value="name">İsim A→Z</option>
+        <option value="cat">Kategoriye Göre</option>
+      </select>
+    </div>
+  </div>
+
+  <div id="library-content"></div>
+</div>
+
+<footer>
+  <p>© 2026 GameStore — Tüm hakları saklıdır. &nbsp;|&nbsp; <a href="store.html">Mağaza</a> &nbsp;|&nbsp; <a href="cart.html">Sepet</a></p>
+  <span class="dev-credit">Developed by Kerim Avcı</span>
+</footer>
+
+<script src="js/data.js?v=3"></script>
+<script src="js/api.js?v=3"></script>
+<script src="js/utils.js?v=3"></script>
+<script>
+  let _libIds = [];
+  let _allProducts = [];
+
+  async function render() {
+    const el = document.getElementById('library-content');
+    const search = document.getElementById('lib-search').value.trim().toLowerCase();
+    const sort = document.getElementById('lib-sort').value;
+
+    if (_libIds.length === 0) {
+      el.innerHTML = `
+        <div style="text-align:center;padding:4rem 2rem;color:var(--text-muted);">
+          <div style="font-size:4rem;margin-bottom:1rem;opacity:0.4;">📚</div>
+          <h3 style="color:var(--text-primary);margin-bottom:0.5rem;">Kütüphaneniz Boş</h3>
+          <p>Satın aldığınız oyunlar burada görünür.</p>
+          <a href="store.html" class="btn btn-primary" style="margin-top:1.5rem;display:inline-block;">Mağazaya Git</a>
+        </div>`;
+      return;
+    }
+
+    let products = _libIds.map(id => _allProducts.find(p => p.id === id)).filter(Boolean);
+
+    if (search) products = products.filter(p =>
+      p.title.toLowerCase().includes(search) || p.category.toLowerCase().includes(search)
+    );
+
+    if (sort === 'name') products.sort((a, b) => a.title.localeCompare(b.title, 'tr'));
+    else if (sort === 'cat') products.sort((a, b) => a.category.localeCompare(b.category, 'tr'));
+
+    if (products.length === 0) {
+      el.innerHTML = '<p class="no-results">Arama kriterinize uygun oyun bulunamadı.</p>';
+      return;
+    }
+
+    const cats = [...new Set(products.map(p => p.category))];
+    const totalPaid = products.reduce((s, p) => s + parseFloat(p.price||0), 0);
+
+    const statsHTML = `
+      <div style="display:flex;gap:1.5rem;margin-bottom:2rem;flex-wrap:wrap;">
+        <div class="stat-card" style="flex:1;min-width:140px;">
+          <div class="stat-icon">🎮</div>
+          <div class="stat-num">${_libIds.length}</div>
+          <div class="stat-label">Toplam Oyun</div>
+        </div>
+        <div class="stat-card" style="flex:1;min-width:140px;">
+          <div class="stat-icon">🏷️</div>
+          <div class="stat-num">${cats.length}</div>
+          <div class="stat-label">Kategori</div>
+        </div>
+        <div class="stat-card" style="flex:1;min-width:140px;">
+          <div class="stat-icon">💰</div>
+          <div class="stat-num">₺${totalPaid.toLocaleString('tr-TR')}</div>
+          <div class="stat-label">Toplam Harcama</div>
+        </div>
+      </div>`;
+
+    const gamesHTML = `
+      <div class="library-grid">
+        ${products.map(p => `
+          <div class="library-item" onclick="window.location.href='game.html?id=${p.id}'" style="cursor:pointer;">
+            <div class="library-item-icon">
+              ${p.image ? `<img src="${p.image}" alt="${p.title}" onerror="this.style.display='none'" loading="lazy" />` : p.emoji || '🎮'}
+            </div>
+            <div style="padding:0 0.5rem;">
+              <div class="library-item-name">${p.title}</div>
+              <div style="font-size:0.72rem;color:var(--text-muted);margin-top:0.2rem;">${p.category}</div>
+              <div style="font-size:0.72rem;color:var(--accent-light);font-weight:700;margin-top:0.2rem;">${formatPrice(p.price)}</div>
+            </div>
+          </div>`).join('')}
+      </div>`;
+
+    el.innerHTML = statsHTML + gamesHTML;
+  }
+
+  (async () => {
+    await renderNavbar('library');
+    const user = await DB.getCurrentUser();
+    if (!user) { window.location.href = 'login.html'; return; }
+
+    // Kütüphane: siparişlerden toplanan product_id listesi
+    const [orders, allProds] = await Promise.all([
+      DB.getUserOrders().catch(() => []),
+      DB.getProducts().catch(() => [])
+    ]);
+    _allProducts = allProds;
+    const idSet = new Set();
+    orders.forEach(o => {
+      (o.items || []).forEach(item => {
+        if (item.product_id) idSet.add(item.product_id);
+      });
+    });
+    _libIds = [...idSet];
+    render();
+  })();
+</script>
+</body>
+</html>

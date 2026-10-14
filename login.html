@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎮</text></svg>">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Giriş Yap — GameStore</title>
+  <link rel="stylesheet" href="css/style.css?v=3" />
+  <script>if((performance.getEntriesByType('navigation')[0]||{}).type==='reload'||performance.navigation&&performance.navigation.type===1){window.location.replace('index.html');}</script>
+</head>
+<body>
+
+<div class="auth-page">
+  <div class="auth-box">
+    <div class="auth-logo">🎮</div>
+    <h2>GameStore</h2>
+    <p class="auth-sub">Hesabınıza giriş yapın</p>
+
+    <div id="msg"></div>
+
+    <form id="login-form" onsubmit="handleLogin(event)">
+      <div class="form-group">
+        <label>Kullanıcı Adı</label>
+        <input type="text" id="username" placeholder="kullanici_adi" required autocomplete="username" />
+      </div>
+      <div class="form-group">
+        <label>Şifre</label>
+        <input type="password" id="password" placeholder="••••••••" required autocomplete="current-password" />
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;padding:0.8rem;font-size:1rem;margin-top:0.5rem;">Giriş Yap</button>
+    </form>
+
+    <div class="divider">veya</div>
+
+    <div style="text-align:center;font-size:0.85rem;color:var(--text-muted);">
+      <strong>Demo Admin:</strong> admin / admin123
+    </div>
+
+    <div class="auth-footer">
+      Hesabınız yok mu? <a href="register.html">Kayıt Ol</a>
+    </div>
+    <div class="auth-footer" style="margin-top:0.5rem;">
+      <a href="index.html" style="color:var(--text-muted);">← Ana Sayfaya Dön</a>
+    </div>
+  </div>
+</div>
+
+<script src="js/data.js?v=3"></script>
+    <script src="js/api.js?v=3"></script>
+<script src="js/utils.js?v=3"></script>
+<script>
+  // Zaten giriş yapmışsa yönlendir (async)
+  (async () => {
+    const user = await DB.getCurrentUser();
+    if (user) window.location.href = 'index.html';
+  })();
+
+  async function handleLogin(e) {
+    e.preventDefault();
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+    const msgEl = document.getElementById('msg');
+
+    if (!username || !password) {
+      msgEl.innerHTML = '<div class="alert alert-error">Lütfen tüm alanları doldurun.</div>';
+      return;
+    }
+
+    const btn = e.target.querySelector('button[type=submit]');
+    btn.disabled = true;
+    btn.textContent = 'Giriş yapılıyor...';
+
+    const result = await DB.loginUser(username, password);
+    if (result.ok) {
+      msgEl.innerHTML = '<div class="alert alert-success">Giriş başarılı! Yönlendiriliyorsunuz...</div>';
+      setTimeout(() => {
+        const redirect = new URLSearchParams(window.location.search).get('redirect') || 'index.html';
+        window.location.href = redirect;
+      }, 700);
+    } else {
+      msgEl.innerHTML = `<div class="alert alert-error">${result.msg}</div>`;
+      btn.disabled = false;
+      btn.textContent = 'Giriş Yap';
+    }
+  }
+</script>
+<footer>
+  <p>© 2026 GameStore &nbsp;|&nbsp; <a href="store.html">Mağaza</a></p>
+  <span class="dev-credit">Developed by Kerim Avcı</span>
+</footer>
+</body>
+</html>

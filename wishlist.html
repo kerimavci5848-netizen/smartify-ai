@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎮</text></svg>">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Favorilerim — GameStore</title>
+  <link rel="stylesheet" href="css/style.css?v=3" />
+  <script>if((performance.getEntriesByType('navigation')[0]||{}).type==='reload'||performance.navigation&&performance.navigation.type===1){window.location.replace('index.html');}</script>
+</head>
+<body>
+
+<nav class="navbar" id="navbar"></nav>
+
+<div class="container">
+  <div class="breadcrumb">
+    <a href="index.html">Ana Sayfa</a> › <span>Favorilerim</span>
+  </div>
+  <h1 class="section-title">❤️ Favori Oyunlarım</h1>
+  <div id="wishlist-content"></div>
+</div>
+
+<footer>
+  <p>© 2026 GameStore — Tüm hakları saklıdır. &nbsp;|&nbsp; <a href="store.html">Mağaza</a> &nbsp;|&nbsp; <a href="cart.html">Sepet</a></p>
+  <span class="dev-credit">Developed by Kerim Avcı</span>
+</footer>
+
+<script src="js/data.js?v=3"></script>
+    <script src="js/api.js?v=3"></script>
+<script src="js/utils.js?v=3"></script>
+<script>
+  let _user = null;
+  let _allProducts = [];
+
+  async function render() {
+    const wishlistIds = await DB.getWishlist();
+    const cartItems = await DB.getCart();
+    const el = document.getElementById('wishlist-content');
+
+    if (wishlistIds.length === 0) {
+      el.innerHTML = `
+        <div class="wishlist-empty">
+          <div class="empty-icon">❤️</div>
+          <h3>Favori listeniz boş</h3>
+          <p>Beğendiğiniz oyunları favori listenize ekleyerek buradan takip edebilirsiniz.</p>
+          <a href="store.html" class="btn btn-primary" style="margin-top:1.5rem;display:inline-block;">Mağazayı Gez</a>
+        </div>`;
+      return;
+    }
+
+    const products = wishlistIds.map(id => _allProducts.find(p => p.id === id)).filter(Boolean);
+    const library = _user ? (_user.library || []) : [];
+
+    const itemsHTML = products.map(p => {
+      const inCart = cartItems.some(c => (c.product_id || c.productId) === p.id);
+      const owned = library.includes(p.id);
+
+      let actionBtn = '';
+      if (owned) {
+        actionBtn = `<span class="stock-badge in-stock">✅ Sahipsiniz</span>`;
+      } else if (p.stock <= 0) {
+        actionBtn = `<button class="btn btn-sm btn-secondary" disabled>Tükendi</button>`;
+      } else if (inCart) {
+        actionBtn = `<a href="cart.html" class="btn btn-sm btn-success">Sepette →</a>`;
+      } else {
+        actionBtn = `<button class="btn btn-sm btn-primary" onclick="addToCart('${p.id}')">🛒 Sepete Ekle</button>`;
+      }
+
+      const imgHTML = p.image
+        ? `<div class="wishlist-item-img"><img src="${p.image}" alt="${p.title}" onerror="this.style.display='none'" loading="lazy" /></div>`
+        : `<div class="wishlist-item-img" style="font-size:1.5rem;">${p.emoji || '🎮'}</div>`;
+
+      return `
+        <div class="wishlist-item">
+          ${imgHTML}
+          <div style="flex:1;">
+            <a href="game.html?id=${p.id}" style="font-weight:600;color:var(--text-bright);font-size:1rem;">${p.title}</a>
+            <div style="font-size:0.82rem;color:var(--text-muted);margin-top:0.2rem;">${p.category} · ${p.developer || ''}</div>
+            <div style="margin-top:0.5rem;display:flex;align-items:center;gap:0.7rem;flex-wrap:wrap;">
+              <span style="font-weight:700;color:var(--accent-light);font-size:0.95rem;">${formatPrice(p.price)}</span>
+              ${stockBadgeHTML(p.stock)}
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.5rem;">
+            ${actionBtn}
+            <button class="btn btn-sm btn-secondary" onclick="removeFromWishlist('${p.id}')">🗑️ Kaldır</button>
+          </div>
+        </div>`;
+    }).join('');
+
+    const totalValue = products.filter(p => p.stock > 0).reduce((s, p) => s + parseFloat(p.price||0), 0);
+
+    el.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;flex-wrap:wrap;gap:0.5rem;">
+        <span style="color:var(--text-muted);font-size:0.9rem;">${products.length} oyun favori listende</span>
+        <span style="color:var(--text-muted);font-size:0.85rem;">Toplam değer: <strong style="color:var(--accent-light)">${formatPrice(totalValue)}</strong></span>
+      </div>
+      ${itemsHTML}
+      <div style="margin-top:1.5rem;">
+        <button class="btn btn-success" onclick="addAllToCart()">🛒 Tümünü Sepete Ekle</button>
+      </div>`;
+  }
+
+  async function removeFromWishlist(productId) {
+    await DB.toggleWishlist(null, productId);
+    showToast('Favorilerden kaldırıldı.', 'info');
+    render();
+  }
+
+  async function addToCart(productId) {
+    const result = await DB.addToCart(productId);
+    if (result.ok) {
+      showToast('Sepete eklendi!', 'success');
+      render();
+    } else {
+      showToast(result.msg, 'error');
+    }
+  }
+
+  async function addAllToCart() {
+    const wishlistIds = await DB.getWishlist();
+    let added = 0, skipped = 0;
+    for (const id of wishlistIds) {
+      const p = _allProducts.find(x => x.id === id);
+      if (!p || p.stock <= 0) { skipped++; continue; }
+      const result = await DB.addToCart(id);
+      if (result.ok) added++;
+      else skipped++;
+    }
+    if (added > 0) showToast(`${added} oyun sepete eklendi!`, 'success');
+    if (skipped > 0) showToast(`${skipped} oyun eklenemedi.`, 'warning');
+    render();
+  }
+
+  (async () => {
+    await renderNavbar('wishlist');
+    _user = await DB.getCurrentUser();
+    if (!_user) { window.location.href = 'login.html'; return; }
+    _allProducts = await DB.getProducts();
+    render();
+  })();
+</script>
+</body>
+</html>

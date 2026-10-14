@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎮</text></svg>">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Destek Hattı — GameStore</title>
+  <link rel="stylesheet" href="css/style.css?v=3" />
+  <script>if((performance.getEntriesByType('navigation')[0]||{}).type==='reload'||performance.navigation&&performance.navigation.type===1){window.location.replace('index.html');}</script>
+</head>
+<body>
+
+<nav class="navbar" id="navbar"></nav>
+
+<div class="container">
+  <div class="breadcrumb">
+    <a href="index.html">Ana Sayfa</a> › <span>Destek Hattı</span>
+  </div>
+
+  <h1 class="section-title">🎧 Destek Hattı</h1>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:start;" class="support-grid">
+
+    <!-- SOL: SSS -->
+    <div>
+      <h2 style="color:var(--text-bright);font-size:1.2rem;margin-bottom:1.2rem;">❓ Sık Sorulan Sorular</h2>
+
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          Satın aldığım oyun kütüphaneme nasıl eklenir?
+          <span class="faq-arrow">▼</span>
+        </div>
+        <div class="faq-answer">
+          Satın alma işlemi tamamlandıktan sonra oyununuz otomatik olarak kütüphanenize eklenir. Profil sayfanızdaki "Kütüphane" sekmesinden veya navbar'daki 📚 Kütüphane bağlantısından erişebilirsiniz.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          Stokta olmayan bir oyunu nasıl takip edebilirim?
+          <span class="faq-arrow">▼</span>
+        </div>
+        <div class="faq-answer">
+          Oyunu favori (istek) listenize ekleyebilirsiniz. Favoriler sayfanızdan oyunu takip edebilir, stok durumu değiştiğinde hemen satın alabilirsiniz. Favori eklemek için oyun kartındaki ❤️ butonuna tıklayın.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          Sepetime eklediğim oyunu neden satın alamıyorum?
+          <span class="faq-arrow">▼</span>
+        </div>
+        <div class="faq-answer">
+          Sepetteki oyunlardan biri ya da birkaçı tükenmiş olabilir. Sepet sayfasında kırmızı uyarı ile tükenmiş ürünler belirtilir. Bu ürünleri sepetten kaldırmanız gerekmektedir.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          Şifremi unuttum, ne yapmalıyım?
+          <span class="faq-arrow">▼</span>
+        </div>
+        <div class="faq-answer">
+          Şu anda otomatik şifre sıfırlama özelliği bulunmamaktadır. Destek formunu kullanarak bizimle iletişime geçin, hesabınızla ilgili yardımcı olacağız.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          Bir oyun hatalı mı görünüyor, nasıl bildiririm?
+          <span class="faq-arrow">▼</span>
+        </div>
+        <div class="faq-answer">
+          Sağ taraftaki destek formunu kullanarak "Teknik Sorun" kategorisini seçip bize bildirin. En kısa sürede inceleyip düzelteceğiz.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          Ücretsiz oyunları nasıl edinebilirim?
+          <span class="faq-arrow">▼</span>
+        </div>
+        <div class="faq-answer">
+          Ücretsiz oyunları sepete ekleyip normal satın alma işlemi gibi tamamlayabilirsiniz. Ödeme tutarı sıfır olacağından ek bir ücret tahsil edilmez.
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)">
+          Admin paneline nasıl erişebilirim?
+          <span class="faq-arrow">▼</span>
+        </div>
+        <div class="faq-answer">
+          Admin paneline yalnızca yetkili hesaplar erişebilir. Demo için: kullanıcı adı <strong>admin</strong>, şifre <strong>admin123</strong>. Giriş yaptıktan sonra navbar'daki Admin butonundan panele ulaşabilirsiniz.
+        </div>
+      </div>
+
+      <!-- İletişim bilgileri -->
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:1.5rem;margin-top:1.5rem;">
+        <h3 style="color:var(--text-bright);margin-bottom:1rem;font-size:1rem;">📞 Diğer İletişim Kanalları</h3>
+        <div style="display:flex;flex-direction:column;gap:0.6rem;font-size:0.9rem;color:var(--text-muted);">
+          <div>📧 E-posta: <a href="mailto:destek@gamestore.com" style="color:var(--accent-light)">destek@gamestore.com</a></div>
+          <div>🕒 Çalışma Saatleri: Hafta içi 09:00 – 18:00</div>
+          <div>⏱️ Ortalama Yanıt Süresi: 24 saat içinde</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SAĞ: FORM -->
+    <div>
+      <h2 style="color:var(--text-bright);font-size:1.2rem;margin-bottom:1.2rem;">📩 Destek Talebi Oluştur</h2>
+      <div class="support-form-box">
+        <div id="form-msg"></div>
+
+        <div class="form-group">
+          <label>Adınız / Kullanıcı Adı *</label>
+          <input type="text" id="s-name" placeholder="Kullanıcı adınız" />
+        </div>
+        <div class="form-group">
+          <label>E-posta *</label>
+          <input type="email" id="s-email" placeholder="iletisim@email.com" />
+        </div>
+        <div class="form-group">
+          <label>Kategori *</label>
+          <select id="s-cat">
+            <option value="">Seçiniz...</option>
+            <option value="Sipariş Sorunu">Sipariş Sorunu</option>
+            <option value="Stok Sorunu">Stok Sorunu</option>
+            <option value="Hesap Sorunu">Hesap Sorunu</option>
+            <option value="Teknik Sorun">Teknik Sorun</option>
+            <option value="Ödeme Sorunu">Ödeme Sorunu</option>
+            <option value="Diğer">Diğer</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Konu *</label>
+          <input type="text" id="s-subject" placeholder="Sorununuzu kısaca belirtin" />
+        </div>
+        <div class="form-group">
+          <label>Mesajınız *</label>
+          <textarea id="s-message" placeholder="Sorununuzu detaylıca açıklayın..." style="min-height:130px;"></textarea>
+        </div>
+
+        <button class="btn btn-primary" style="width:100%;padding:0.85rem;" onclick="submitTicket()">
+          📨 Destek Talebi Gönder
+        </button>
+      </div>
+
+      <!-- Kullanıcının kendi talepleri -->
+      <div id="my-tickets-section" style="margin-top:1.5rem;"></div>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  <p>© 2026 GameStore — Tüm hakları saklıdır. &nbsp;|&nbsp; <a href="store.html">Mağaza</a> &nbsp;|&nbsp; <a href="cart.html">Sepet</a></p>
+  <span class="dev-credit">Developed by Kerim Avcı</span>
+</footer>
+
+<script src="js/data.js?v=3"></script>
+    <script src="js/api.js?v=3"></script>
+<script src="js/utils.js?v=3"></script>
+<script>
+  let currentUser = null;
+
+  // FAQ toggle
+  function toggleFaq(el) {
+    const answer = el.nextElementSibling;
+    const isOpen = el.classList.contains('open');
+    document.querySelectorAll('.faq-question').forEach(q => q.classList.remove('open'));
+    document.querySelectorAll('.faq-answer').forEach(a => a.classList.remove('open'));
+    if (!isOpen) {
+      el.classList.add('open');
+      answer.classList.add('open');
+    }
+  }
+
+  // Form gönder
+  async function submitTicket() {
+    const name = document.getElementById('s-name').value.trim();
+    const email = document.getElementById('s-email').value.trim();
+    const category = document.getElementById('s-cat').value;
+    const subject = document.getElementById('s-subject').value.trim();
+    const message = document.getElementById('s-message').value.trim();
+    const msgEl = document.getElementById('form-msg');
+
+    if (!name || !email || !category || !subject || !message) {
+      msgEl.innerHTML = '<div class="alert alert-error">Lütfen tüm zorunlu alanları doldurun.</div>';
+      return;
+    }
+
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      msgEl.innerHTML = '<div class="alert alert-error">Geçerli bir e-posta adresi girin.</div>';
+      return;
+    }
+
+    const result = await DB.createSupportTicket({ username: name, email, subject, category, message });
+
+    if (result.ok) {
+      msgEl.innerHTML = `<div class="alert alert-success">✅ Destek talebiniz alındı! Talep No: <strong>#${shortId(result.ticketId)}</strong><br>En kısa sürede yanıt verilecektir.</div>`;
+      document.getElementById('s-cat').value = '';
+      document.getElementById('s-subject').value = '';
+      document.getElementById('s-message').value = '';
+      renderMyTickets();
+    } else {
+      msgEl.innerHTML = `<div class="alert alert-error">${result.msg || 'Bir hata oluştu.'}</div>`;
+    }
+  }
+
+  // Kullanıcının talepleri
+  async function renderMyTickets() {
+    if (!currentUser) return;
+    const section = document.getElementById('my-tickets-section');
+    const allTickets = await DB.getSupportTickets();
+    const tickets = allTickets.reverse();
+    if (tickets.length === 0) return;
+
+    section.innerHTML = `
+      <h3 style="color:var(--text-bright);font-size:1rem;margin-bottom:1rem;">📋 Önceki Taleplerim</h3>
+      ${tickets.map(t => `
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:1rem;margin-bottom:0.7rem;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
+            <span style="font-size:0.82rem;color:var(--text-muted);">#${shortId(t.id)} · ${formatDate(t.created_at || t.createdAt)}</span>
+            <span style="font-size:0.75rem;padding:0.15rem 0.5rem;border-radius:3px;font-weight:700;${t.status === 'closed' ? 'background:rgba(39,174,96,0.15);color:var(--accent-green);border:1px solid rgba(39,174,96,0.3)' : 'background:rgba(230,126,34,0.15);color:var(--accent-orange);border:1px solid rgba(230,126,34,0.3)'}">
+              ${t.status === 'closed' ? '✅ Yanıtlandı' : '⏳ Beklemede'}
+            </span>
+          </div>
+          <div style="font-weight:600;color:var(--text-bright);margin-bottom:0.3rem;">${t.subject}</div>
+          <div style="font-size:0.82rem;color:var(--text-muted);">${t.category} · ${t.message.slice(0, 80)}${t.message.length > 80 ? '...' : ''}</div>
+          ${t.reply ? `<div style="margin-top:0.7rem;padding:0.7rem;background:rgba(192,57,43,0.08);border-left:3px solid var(--accent);border-radius:0 4px 4px 0;font-size:0.85rem;color:var(--text-primary);"><strong>Admin Yanıtı:</strong> ${t.reply}</div>` : ''}
+        </div>`).join('')}`;
+  }
+
+  // Init
+  (async () => {
+    await renderNavbar('support');
+    currentUser = await DB.getCurrentUser();
+    if (currentUser) {
+      document.getElementById('s-name').value = currentUser.username;
+      document.getElementById('s-email').value = currentUser.email;
+      renderMyTickets();
+    }
+  })();
+</script>
+
+<style>
+  @media (max-width: 700px) {
+    .support-grid { grid-template-columns: 1fr !important; }
+  }
+</style>
+</body>
+</html>
